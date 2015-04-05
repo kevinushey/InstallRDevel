@@ -98,6 +98,7 @@ for FILEPATH in ${GFORTRAN_LIBPATH}/libgfortran*; do
 		echo File \'${LINKEDPATH}\' already exists, not symlinking
 	else
 		echo Symlinking \'${BASENAME}\' to \'${LINKEDPATH}\'
+		ln -s "${FILEPATH}" "${LINKEDPATH}"
 	fi
 done;
 
