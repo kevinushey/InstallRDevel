@@ -16,6 +16,9 @@ REM If you modify the configuration below, be sure to use
 REM a directory _within the %USERPROFILE%; ie, your user
 REM directory; otherwise you will almost certainly run into
 REM very bizarre permission issues on build.
+REM
+REM TODO: Get this to generate an installer that provides
+REM both 32bit and 64bit R.
 
 REM ---------------------------------
 REM - BEGIN CONFIGURATION VARIABLES -
@@ -68,12 +71,12 @@ REM -------------------------------
 
 REM Ensure that some essential tools are on the PATH.
 where /Q %WGET% || (
-	ECHO wget [%WGET%] not found on PATH; exiting
+	ECHO wget not found on PATH; exiting
 	exit /b
 )
 
 where /Q %SVN% || (
-	ECHO svn [%SVN%] not found on PATH; exiting
+	ECHO svn not found on PATH; exiting
 	exit /b
 )
 
@@ -106,6 +109,7 @@ cd %RTOOLS_DIR%\gcc492_64\bin
 find * -not -name "x86*" -exec cp {} "x86_64-w64-mingw32-{}" ;
 cd %RTOOLS_DIR%\gcc492_32\bin
 find * -not -name "i686*" -exec cp {} "i686-w64-mingw32-{}" ;
+cd %ROOT_DIR%
 
 REM Download the R sources. Get the latest R-devel sources using SVN.
 svn checkout https://svn.r-project.org/R/trunk/
@@ -141,6 +145,12 @@ REM Recommended packages.
 make rsync-recommended
 
 REM Download external software -- libpng, libgsl, and so on.
+REM NOTE: It appears that the Makefile rule used here might
+REM infer the current R version as 3.3; the files, however,
+REM exist in a 3.2 directory, so we manually modify that
+REM ourselves here. (We just modify the VERSION file, which
+REM the Makefile rule uses to scrape that.)
+echo 3.2.0 Under development (unstable)> ..\..\VERSION
 make rsync-extsoft
 
 REM Look at MkRules.dist and if settings need to be altered,
@@ -148,15 +158,16 @@ REM copy it to MkRules.local and edit the settings there.
 if exist MkRules.local (
 	rm MkRules.local
 )
-cp MkRules.dist MkRules.local
 
-REM Don't use MIKTEX.
-sed -i 's/^MIKTEX = TRUE//g' MkRules.local
+REM This seems unneeded.
+REM cp MkRules.dist MkRules.local
 
 REM Ensure that the make rules are properly set -- need to
-REM point to 'extsoft'.
-sed -i 's/^# LOCAL_SOFT/LOCAL_SOFT/g' MkRules.local
-sed -i 's/^# EXT_LIBS/EXT_LIBS/g' MkRules.local
+REM point to 'extsoft'. NOTE: We have to be careful to write
+REM these files out without any trailing whitespace!
+echo LOCAL_SOFT = $(R_HOME)/extsoft>> MkRules.local
+echo EXT_LIBS = $(LOCAL_SOFT)>> MkRules.local
+echo MIKTEX =>> MkRules.local
 
 REM Attempt to fix up permissions before the build.
 cacls %R_HOME% /T /E /G BUILTIN\Users:R > NUL
