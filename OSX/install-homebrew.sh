@@ -34,7 +34,7 @@
 
 ## ----- END CONFIGURATION VARIABLES ----- ##
 
-OWD="$(pwd)"
+OWD=`pwd`
 
 ## check if homebrew is installed
 echo "Checking for Homebrew..."
@@ -88,10 +88,14 @@ GFORTRAN_BINPATH=`which ${GFORTRAN} | xargs greadlink -f | xargs dirname`
 GFORTRAN_LIBPATH=${GFORTRAN_BINPATH}/../lib/gcc/4.9/
 GFORTRAN_LIBPATH=`greadlink -f ${GFORTRAN_LIBPATH}`
 
-for file in ${GFORTRAN_LIBPATH}/libgfortran*; do
-    echo Symlinking file: ${file##*/}
-    rm /usr/local/lib/${file##*/} 2> /dev/null
-    ln -fs "${file}" /usr/local/lib/${file##*/}
+for FILEPATH in ${GFORTRAN_LIBPATH}/libgfortran*; do
+	BASENAME=${FILEPATH##*/}
+	LINKEDPATH=/usr/local/lib/${BASENAME}
+	if test -e "${LINKEDPATH}"; then
+		echo File \'${LINKEDPATH}\' already exists, not symlinking
+	else
+		echo Symlinking \'${BASENAME}\' to \'${LINKEDPATH}\'
+	fi
 done;
 
 ## Download R-devel from SVN
@@ -111,7 +115,6 @@ echo "Syncing recommended R packages..."
 ## 'Rinterface.h' in multiple translation units (we were encountering
 ## linker errors)
 echo Adding a missing extern in 'Rinterface.h'...
-sed -i '' 's/^int R_running_as_main_program/extern int R_running_as_main_program/g' include/Rinterface.h
 sed -i '' 's/^int R_running_as_main_program/extern int R_running_as_main_program/g' src/include/Rinterface.h
 
 ## For some reason, there is trouble in locating Homebrew Cairo;
@@ -123,6 +126,7 @@ cat > config.site <<- EOM
 CC="${CC}"
 CFLAGS="${CFLAGS}"
 CXX="${CXX}"
+CXXFLAGS="${CXXFLAGS}"
 F77="${FORTRAN}"
 FFLAGS="${FFLAGS}"
 FC="${FORTRAN}"
@@ -153,9 +157,8 @@ make clean
 
 make -j10
 
-echo "Installing to system library: please enter your password so we can 'sudo make install'\n"
-
 if test "${INSTALLDIR}" = "/Library/Frameworks"; then
+	echo Installing to system library: please enter your password
 	sudo make install
 else
 	make install
