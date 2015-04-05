@@ -16,21 +16,21 @@
 ## ----- CONFIGURATION VARIABLES ----- ##
 
 # Installation-related
-INSTALLDIR=${INSTALLDIR:=/Library/Frameworks} # NOTE: needs 'sudo' on make install
-SOURCEDIR=${SOURCEDIR:=~/R-devel}             # checked out R sources will live here
-TMP=${TMP:=${HOME}/tmp}                       # temporary dir used on installation
+: ${INSTALLDIR:=/Library/Frameworks}        # NOTE: needs 'sudo' on make install
+: ${SOURCEDIR:=~/R-devel}                   # checked out R sources will live here
+: ${TMP:=${HOME}/tmp}                       # temporary dir used on installation
 
 ## Compiler-specific
-CC=${CC:=clang}
-CXX=${CXX:=clang++}
-CFLAGS=${CFLAGS:=-g -O3 -Wall -pedantic}
-CXXFLAGS=${CXXFLAGS:=-g -O3 -Wall -pedantic}
-FORTRAN=${FORTRAN:=gfortran}
-FFLAGS=${FFLAGS:=-g -O3 -Wall -pedantic}
-OBJC=${OBJC:=clang}
-OBJCFLAGS=${OBJCFLAGS:=${CFLAGS}}
-MAKE=${MAKE:=make}
-MAKEFLAGS=${MAKEFLAGS:=-j10}
+: ${CC:=clang}
+: ${CXX:=clang++}
+: ${CFLAGS:=-g -O3 -Wall -pedantic}
+: ${CXXFLAGS:=-g -O3 -Wall -pedantic}
+: ${FORTRAN:=gfortran}
+: ${FFLAGS:=-g -O3} 
+: ${OBJC:=clang}
+: ${OBJCFLAGS:=${CFLAGS}}
+: ${MAKE:=make}
+: ${MAKEFLAGS:=-j10}
 
 ## ----- END CONFIGURATION VARIABLES ----- ##
 
@@ -119,20 +119,19 @@ sed -i '' 's/^int R_running_as_main_program/extern int R_running_as_main_program
 export PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig
 
 ## modify config.site so that it gets the appropriate compilers etc
-rm config.site
-touch config.site
-echo CC=\"${CC}\" >> config.site
-echo CFLAGS=\"${CFLAGS}\" >> config.site
-echo CXX=\"${CXX}\" >> config.site
-echo CXXFLAGS=\"${CXXFLAGS}\" >> config.site
-echo F77=\"${FORTRAN}\" >> config.site
-echo FFLAGS=\"${FFLAGS}\" >> config.site
-echo FC=\"${FORTRAN}\" >> config.site
-echo FCFLAGS=\"${FFLAGS}\" >> config.site
-echo OBJC=\"${OBJC}\" >> config.site
-echo OBJCFLAGS=\"${OBJCFLAGS}\" >> config.site
-echo MAKE=\"${MAKE}\" >> config.site
-echo MAKEFLAGS=\"${MAKEFLAGS}\" >> config.site
+cat > config.site <<- EOM
+CC="${CC}"
+CFLAGS="${CFLAGS}"
+CXX="${CXX}"
+F77="${FORTRAN}"
+FFLAGS="${FFLAGS}"
+FC="${FORTRAN}"
+FCFLAGS="${FFLAGS}"
+OBJC="${OBJC}"
+OBJCFLAGS="${OBJCFLAGS}"
+MAKE="${MAKE}"
+MAKEFLAGS="${MAKEFLAGS}"
+EOM
 
 make distclean
 make clean
