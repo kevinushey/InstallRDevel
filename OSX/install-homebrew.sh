@@ -16,8 +16,9 @@
 ## ----- CONFIGURATION VARIABLES ----- ##
 
 # Installation-related
-SOURCEDIR=${SOURCEDIR:=~/R-devel}
-TMP=${TMP:=${HOME}/tmp}
+INSTALLDIR=${INSTALLDIR:=/Library/Frameworks} # NOTE: needs 'sudo' on make install
+SOURCEDIR=${SOURCEDIR:=~/R-devel}             # checked out R sources will live here
+TMP=${TMP:=${HOME}/tmp}                       # temporary dir used on installation
 
 ## Compiler-specific
 CC=${CC:=clang}
@@ -147,12 +148,19 @@ make clean
     --enable-R-profiling \
     --enable-memory-profiling \
     --with-valgrind-instrumentation=2 \
-    --without-internal-tzcode
+    --without-internal-tzcode \
+    --prefix=${INSTALLDIR} \
+    $@
 
 make -j10
 
 echo "Installing to system library: please enter your password so we can 'sudo make install'\n"
-sudo make install
+
+if test "${INSTALLDIR}" = "/Library/Frameworks"; then
+	sudo make install
+else
+	make install
+fi
 
 echo Installation completed successfully\!
 cd ${OWD}
