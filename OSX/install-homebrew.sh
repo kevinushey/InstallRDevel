@@ -32,6 +32,9 @@
 : ${MAKE:=make}
 : ${MAKEFLAGS:=-j10}
 
+## Ensure .dSYM folders are generated, to ensure easier debugging
+export PKG_MAKE_DSYM=yes
+
 ## ----- END CONFIGURATION VARIABLES ----- ##
 
 OWD=`pwd`
