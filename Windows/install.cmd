@@ -95,13 +95,26 @@ SET "RTOOLS_INSTALLER=.\Rtools%RTOOLS_VERSION%.exe"
 REM Put Rtools on the path.
 SET "PATH=%RTOOLS_BIN_DIR%;%PATH%"
 
+REM After installing Rtools, we evidently need to rename
+REM binary files so that they're picked up on installation.
+REM Fortunately, we have Rtools now so we can use that
+REM rather than vanilla CMD stuff to do the file munging
+REM here...  Still, I am not sure why this step is needed
+REM (it seems more likely that I am missing some step
+REM upstream)
+cd %RTOOLS_DIR%\gcc492_64\bin
+find * -not -name "x86*" -exec cp {} "x86_64-w64-mingw32-{}" ;
+cd %RTOOLS_DIR%\gcc492_32\bin
+find * -not -name "i686*" -exec cp {} "i686-w64-mingw32-{}" ;
+
 REM Download the R sources. Get the latest R-devel sources using SVN.
 svn checkout https://svn.r-project.org/R/trunk/
 cd trunk
 
-REM Copy in the 'extras' for a 64bit build. This includes tcltk
-REM plus some other libraries. Note that the R64 directory should
-REM have been populated by the RTools installation.
+REM Copy in the 'extras' for a 64bit build. This includes
+REM tcltk plus some other libraries. Note that the R64
+REM directory should have been populated by the RTools
+REM installation.
 rmdir /S /Q %R_HOME%\Tcl
 xcopy /E /Y C:\R64 %R_HOME%\
 
@@ -110,12 +123,12 @@ if not exist "%TMPDIR%" (
 	mkdir "%TMPDIR%"
 )
 
-REM Create the binary directories that will eventually
-REM be populated ourselves, rather than letting the
-REM bundled cygwin toolkit do it. The RTools 'mkdir'
-REM apparently can build directories without read
-REM permissions, which will cause any attempt to link
-REM to DLLs within those folders to fail.
+REM Create the binary directories that will eventually be
+REM populated ourselves, rather than letting the bundled
+REM cygwin toolkit do it. The RTools 'mkdir' apparently can
+REM build directories without read permissions, which will
+REM cause any attempt to link to DLLs within those folders
+REM to fail.
 rmdir /S /Q bin
 mkdir bin\i386
 mkdir bin\x64
@@ -123,14 +136,15 @@ mkdir bin\x64
 REM Move into the root directory for 'Windows' builds.
 cd src\gnuwin32
 
-REM Since we're building from source, we need to get Recommended packages.
+REM Since we're building from source, we need to get
+REM Recommended packages.
 make rsync-recommended
 
 REM Download external software -- libpng, libgsl, and so on.
 make rsync-extsoft
 
-REM Look at MkRules.dist and if settings need to be altered, copy it to
-REM MkRules.local and edit the settings there.
+REM Look at MkRules.dist and if settings need to be altered,
+REM copy it to MkRules.local and edit the settings there.
 if exist MkRules.local (
 	rm MkRules.local
 )
@@ -148,15 +162,15 @@ REM Attempt to fix up permissions before the build.
 cacls %R_HOME% /T /E /G BUILTIN\Users:R > NUL
 cacls %TMPDIR% /T /E /G BUILTIN\Users:R > NUL
 
-REM Make it!
-REM For this part, we ensure only Rtools is on the PATH. This
-REM is important as if the wrong command line utilites are picked
-REM up things can fail for strange reason. In particular, we
-REM _must_ use the Rtools 'sort', _not_ the Windows 'sort', or
-REM else we will get strange errors from 'comm' when attempting
-REM to compare sorted files. Probably just placing Rtools first
-REM on the PATH is sufficient, but this is fine too.
-SET "PATH=C:\Rtools\bin"
+REM Make it!  For this part, we ensure only Rtools is on the
+REM PATH. This is important as if the wrong command line
+REM utilites are picked up things can fail for strange
+REM reason. In particular, we _must_ use the Rtools 'sort',
+REM _not_ the Windows 'sort', or else we will get strange
+REM errors from 'comm' when attempting to compare sorted
+REM files. Probably just placing Rtools first on the PATH is
+REM sufficient, but this is fine too.
+SET "PATH=C:\Rtools\bin;C:\Rtools\gcc492_64\bin"
 make distclean
 
 REM Now we should be able to build R + recommended packages.
