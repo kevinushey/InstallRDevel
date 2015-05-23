@@ -120,8 +120,10 @@ echo "Syncing recommended R packages..."
 ## This was needed for building some applications that included
 ## 'Rinterface.h' in multiple translation units (we were encountering
 ## linker errors)
-echo Adding a missing extern in 'Rinterface.h'...
-sed -i '' 's/^int R_running_as_main_program/extern int R_running_as_main_program/g' src/include/Rinterface.h
+if test -n "`grep "^int R_running_as_main_program" src/include/Rinterface.h`"; then
+    echo Adding a missing extern in 'Rinterface.h'...
+    sed -i '' 's/^int R_running_as_main_program/extern int R_running_as_main_program/g' src/include/Rinterface.h
+fi
 
 ## For some reason, there is trouble in locating Homebrew Cairo;
 ## we have to make sure pkg-config looks in the right place
