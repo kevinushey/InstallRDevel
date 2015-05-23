@@ -81,26 +81,28 @@ install cairo                      # image write support
 ## Make sure the gfortran libraries get symlinked.
 if command -v gfortran &> /dev/null; then
 	GFORTRAN=gfortran
-elif command -v gfortran-4.9 &> /dev/null; then
-	GFORTRAN=gfortran-4.9
 fi
 
-## Do some path munging and symlink fortran libraries
-## to /usr/local/lib
-GFORTRAN_BINPATH=`which ${GFORTRAN} | xargs greadlink -f | xargs dirname`
-GFORTRAN_LIBPATH=${GFORTRAN_BINPATH}/../lib/gcc/4.9/
-GFORTRAN_LIBPATH=`greadlink -f ${GFORTRAN_LIBPATH}`
+GFORTRAN_SEARCH_PATHS_STRING=`"${GFORTRAN}" -print-search-dirs | tail -n 1 | sed 's|.*=||'`
+IFS=':' read -a GFORTRAN_SEARCH_PATHS <<< "${GFORTRAN_SEARCH_PATHS_STRING}"
+for FILEPATH in "${GFORTRAN_SEARCH_PATHS[@]}"; do
+    if test -e "${FILEPATH}/libgfortran.dylib"; then
+	echo "Found gfortran libraries in:\n${FILEPATH}"
+	GFORTRAN_LIBPATH=`greadlink -f "${FILEPATH}"`
+    fi
+done
+
+if test -z "${GFORTRAN_LIBPATH}"; then
+    echo Failed to discover 'gfortran' library paths
+    exit 1
+fi
 
 for FILEPATH in ${GFORTRAN_LIBPATH}/libgfortran*; do
-	BASENAME=${FILEPATH##*/}
-	LINKEDPATH=/usr/local/lib/${BASENAME}
-	if test -e "${LINKEDPATH}"; then
-		echo File \'${LINKEDPATH}\' already exists, not symlinking
-	else
-		echo Symlinking \'${BASENAME}\' to \'${LINKEDPATH}\'
-		ln -s "${FILEPATH}" "${LINKEDPATH}"
-	fi
-done;
+    BASENAME=${FILEPATH##*/}
+    LINKEDPATH=/usr/local/lib/${BASENAME}
+    echo Symlinking \'${BASENAME}\' to \'${LINKEDPATH}\'
+    ln -fs "${FILEPATH}" "${LINKEDPATH}"
+done
 
 ## Download R-devel from SVN
 cd ~
