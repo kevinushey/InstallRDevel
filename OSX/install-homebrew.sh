@@ -56,7 +56,7 @@ missing () {
 
 install () {
     if test -z `missing $1`; then
-        brew install $1
+        brew install $@
         brew link --force $1
     fi
 }
@@ -73,7 +73,7 @@ install lapack                     # latest lapack
 install texinfo                    # vignettes, help
 install coreutils                  # greadlink
 install jpeg                       # image write support
-install cairo                      # image write support
+install cairo --with-x11           # image write support
 
 ## Make sure the gfortran libraries get symlinked.
 if command -v gfortran &> /dev/null; then
