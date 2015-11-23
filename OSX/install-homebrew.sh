@@ -16,7 +16,7 @@
 ## ----- CONFIGURATION VARIABLES ----- ##
 
 # Installation-related
-: ${INSTALLDIR:=/Library/Frameworks}        # NOTE: needs 'sudo' on make install
+: ${PREFIX:=/Library/Frameworks}            # NOTE: needs 'sudo' on make install
 : ${SOURCEDIR:=~/R-devel}                   # checked out R sources will live here
 : ${TMP:=${HOME}/tmp}                       # temporary dir used on installation
 
@@ -157,12 +157,12 @@ make clean
     --enable-memory-profiling \
     --with-valgrind-instrumentation=2 \
     --without-internal-tzcode \
-    --prefix=${INSTALLDIR} \
+    --prefix=${PREFIX} \
     $@
 
 make -j10
 
-if test "${INSTALLDIR}" = "/Library/Frameworks"; then
+if test "${PREFIX}" = "/Library/Frameworks"; then
 	echo Installing to system library: please enter your password
 	sudo make install
 else
