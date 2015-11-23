@@ -19,6 +19,7 @@
 : ${PREFIX:=/Library/Frameworks}            # NOTE: needs 'sudo' on make install
 : ${SOURCEDIR:=~/R-devel}                   # checked out R sources will live here
 : ${TMP:=${HOME}/tmp}                       # temporary dir used on installation
+: ${ENABLE_R_FRAMEWORK:=yes}
 
 ## Compiler-specific
 : ${CC:=clang}
@@ -33,6 +34,16 @@
 : ${MAKEFLAGS:=-j10}
 
 ## ----- END CONFIGURATION VARIABLES ----- ##
+
+## detect whether we want to build with a framework
+echo "> Prefix: ${PREFIX}"
+if [ "${ENABLE_R_FRAMEWORK}" = "yes" ]; then
+	echo "> R Framework: ENABLED"
+    R_FRAMEWORK='--enable-R-framework'
+else
+	echo "> R Framework: DISABLED"
+    R_FRAMEWORK='--disable-R-framework'
+fi
 
 OWD=`pwd`
 
@@ -150,7 +161,7 @@ make clean
     --with-blas="-L/usr/local/opt/openblas/lib -lopenblas" \
     --with-lapack="-L/usr/local/opt/lapack/lib -llapack" \
     --with-cairo \
-    --enable-R-framework \
+    ${R_FRAMEWORK} \
     --enable-R-shlib \
     --with-readline \
     --enable-R-profiling \
@@ -160,15 +171,32 @@ make clean
     --prefix=${PREFIX} \
     $@
 
-make -j10
-
-if test "${PREFIX}" = "/Library/Frameworks"; then
-	echo Installing to system library: please enter your password
-	sudo make install
-else
-	make install
+STATUS=$?
+if [ "${STATUS}" -ne 0 ]; then
+    echo 'Configure failed!'
+    exit ${STATUS}
 fi
 
-echo Installation completed successfully\!
+make -j10
+STATUS=$?
+if [ "${STATUS}" -ne 0 ]; then
+    echo 'make failed!'
+    exit ${STATUS}
+fi
+
+if test "${PREFIX}" = "/Library/Frameworks"; then
+    INSTALL="sudo make install"
+else
+    INSTALL="make install"
+fi
+
+${INSTALL}
+STATUS=$?
+if [ "${STATUS}" -ne 0 ]; then
+    echo 'make install failed!'
+    exit ${STATUS}
+fi
+
+echo 'Installation completed successfully!'
 cd ${OWD}
 
